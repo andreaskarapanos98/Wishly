@@ -1,7 +1,12 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import Modal from './Modal.jsx'
+import PhotoField from './PhotoField.jsx'
 import { CURRENCIES, normalizeUrl } from '../lib/format.js'
+import { useSupabase } from '../lib/supabase.jsx'
+import { useProfile } from '../lib/profile.jsx'
+import { useToast, errorMessage } from '../lib/toast.jsx'
+import { deleteWishPhoto, uploadWishPhoto } from '../lib/photos.js'
 
 const PRIORITIES = [
   { value: 3, label: 'Would love it' },
@@ -20,22 +25,54 @@ export default function ItemForm({ item, onSubmit, onClose }) {
     priority: item?.priority ?? 2,
   })
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const sb = useSupabase()
+  const toast = useToast()
+  const { profile } = useProfile()
+  // Photos uploaded while this form is open; the ones not kept get deleted.
+  const uploads = useRef([])
 
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
+
+  async function handleUpload(file) {
+    setUploading(true)
+    try {
+      const url = await uploadWishPhoto(sb, profile.id, file)
+      uploads.current.push(url)
+      setForm((f) => ({ ...f, image_url: url }))
+    } catch (err) {
+      toast(errorMessage(err), 'error')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Delete uploaded photos that didn't end up on the saved wish.
+  function cleanUp(keptUrl) {
+    const candidates = [...uploads.current, item?.image_url]
+    candidates.filter((url) => url && url !== keptUrl).forEach((url) => deleteWishPhoto(sb, url))
+  }
+
+  function handleClose() {
+    uploads.current.forEach((url) => deleteWishPhoto(sb, url))
+    onClose()
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setSaving(true)
+    const imageUrl = normalizeUrl(form.image_url)
     try {
-      await onSubmit({
+      const saved = await onSubmit({
         title: form.title.trim(),
         url: normalizeUrl(form.url),
-        image_url: normalizeUrl(form.image_url),
+        image_url: imageUrl,
         price: form.price === '' ? null : Number(form.price),
         currency: form.currency,
         notes: form.notes.trim() || null,
         priority: Number(form.priority),
       })
+      if (saved) cleanUp(imageUrl)
     } finally {
       setSaving(false)
     }
@@ -44,8 +81,8 @@ export default function ItemForm({ item, onSubmit, onClose }) {
   return (
     <Modal
       title={item ? 'Edit wish' : 'Add a wish'}
-      subtitle={item ? null : 'Paste a link so friends know exactly what to get.'}
-      onClose={onClose}
+      subtitle={item ? null : 'Add a link or a photo so friends know exactly what to get.'}
+      onClose={handleClose}
     >
       <form className="form" onSubmit={handleSubmit}>
         <label className="field">
@@ -113,16 +150,15 @@ export default function ItemForm({ item, onSubmit, onClose }) {
           </div>
         </fieldset>
 
-        <label className="field">
-          <span className="field__label">Image link <em>optional</em></span>
-          <input
-            className="input"
+        <div className="field">
+          <span className="field__label">Photo <em>optional</em></span>
+          <PhotoField
             value={form.image_url}
-            onChange={set('image_url')}
-            placeholder="Right-click a product photo → Copy image address"
-            inputMode="url"
+            onChange={(url) => setForm((f) => ({ ...f, image_url: url }))}
+            onUpload={handleUpload}
+            uploading={uploading}
           />
-        </label>
+        </div>
 
         <label className="field">
           <span className="field__label">Notes <em>optional</em></span>
@@ -137,10 +173,14 @@ export default function ItemForm({ item, onSubmit, onClose }) {
         </label>
 
         <div className="form__actions">
-          <button type="button" className="btn btn--ghost" onClick={onClose}>
+          <button type="button" className="btn btn--ghost" onClick={handleClose}>
             Cancel
           </button>
-          <button type="submit" className="btn btn--primary" disabled={saving || !form.title.trim()}>
+          <button
+            type="submit"
+            className="btn btn--primary"
+            disabled={saving || uploading || !form.title.trim()}
+          >
             {saving && <Loader2 className="spin" size={16} />}
             {item ? 'Save changes' : 'Add to wishlist'}
           </button>
@@ -149,5 +189,3 @@ export default function ItemForm({ item, onSubmit, onClose }) {
     </Modal>
   )
 }
-
-export { PRIORITIES }

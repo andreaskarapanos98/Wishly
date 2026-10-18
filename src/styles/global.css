@@ -277,6 +277,86 @@ textarea.input {
   gap: 12px;
 }
 
+.form__row--even {
+  grid-template-columns: 1fr 1fr;
+}
+
+.field__clear {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13.5px;
+}
+
+.photo-field {
+  display: grid;
+  gap: 10px;
+}
+
+.dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 22px 16px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--gold);
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.dropzone:hover,
+.dropzone--active {
+  border-color: var(--gold);
+  background: #fbf5ea;
+}
+
+.dropzone__title {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.dropzone__hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.photo-field__preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-deep);
+}
+
+.photo-field__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-field__busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 0.7);
+}
+
+.photo-field__actions {
+  display: flex;
+  gap: 6px;
+}
+
 .form__actions {
   display: flex;
   justify-content: flex-end;
@@ -398,6 +478,18 @@ textarea.input {
   font-size: 12.5px;
   font-weight: 500;
   color: var(--ink-soft);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.occasion {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .chip--accent {
@@ -740,12 +832,23 @@ textarea.input {
   color: var(--gold);
 }
 
+.item__media > a {
+  position: absolute;
+  inset: 0;
+}
+
 .item__media img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   background: var(--surface);
   padding: 12px;
+}
+
+/* Photos people upload themselves fill the frame. */
+.item__media img.item__photo {
+  object-fit: cover;
+  padding: 0;
 }
 
 .item__badge {

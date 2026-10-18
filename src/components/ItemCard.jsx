@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ExternalLink, Pencil, Trash2, Gift, Check, Loader2, Heart } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import { firstName, formatPrice, hostname } from '../lib/format.js'
+import { isUploadedPhoto } from '../lib/photos.js'
 
 /**
  * mode="owner"  → edit / delete buttons, claims are never shown (RLS hides them anyway)
@@ -29,7 +30,15 @@ export default function ItemCard({ item, mode, currentUserId, onEdit, onDelete, 
     <article className={`item ${claim ? 'item--claimed' : ''}`}>
       <div className="item__media">
         {item.image_url && !imgBroken ? (
-          <img src={item.image_url} alt="" loading="lazy" onError={() => setImgBroken(true)} />
+          <a href={item.image_url} target="_blank" rel="noreferrer noopener" aria-label="Open photo">
+            <img
+              className={isUploadedPhoto(item.image_url) ? 'item__photo' : undefined}
+              src={item.image_url}
+              alt=""
+              loading="lazy"
+              onError={() => setImgBroken(true)}
+            />
+          </a>
         ) : (
           <Gift size={30} strokeWidth={1.4} />
         )}

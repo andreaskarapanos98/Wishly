@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingBag, ExternalLink, CalendarHeart } from 'lucide-react'
+import { ShoppingBag, ExternalLink } from 'lucide-react'
 import Avatar from '../components/Avatar.jsx'
+import Occasions from '../components/Occasions.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { PageLoader } from '../components/AppLayout.jsx'
 import { useSupabase } from '../lib/supabase.jsx'
 import { useProfile } from '../lib/profile.jsx'
 import { useToast, errorMessage } from '../lib/toast.jsx'
 import { listMyClaims, releaseClaim } from '../lib/api.js'
-import { birthdayLabel, formatPrice, hostname } from '../lib/format.js'
+import { formatPrice, hostname } from '../lib/format.js'
 
 export default function Gifts() {
   const sb = useSupabase()
@@ -80,10 +81,10 @@ export default function Gifts() {
                 <h3 className="gift-row__title">{item.title}</h3>
                 <p className="gift-row__meta">
                   For <Link to={`/app/people/${item.owner.id}`}>{item.owner.full_name}</Link>
-                  {item.owner.birthday && (
+                  {(item.owner.birthday || item.owner.nameday) && (
                     <>
                       <span className="dot">·</span>
-                      <CalendarHeart size={13} /> {birthdayLabel(item.owner.birthday)}
+                      <Occasions person={item.owner} iconSize={13} />
                     </>
                   )}
                 </p>

@@ -37,10 +37,10 @@ export function normalizeUrl(value) {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
 }
 
-/** Days until the next occurrence of a birthday (0 = today). */
-export function daysUntilBirthday(birthday) {
-  if (!birthday) return null
-  const [, month, day] = birthday.split('-').map(Number)
+/** Days until the next yearly occurrence of a date like "1998-03-21" (0 = today). */
+export function daysUntil(date) {
+  if (!date) return null
+  const [, month, day] = date.split('-').map(Number)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   let next = new Date(today.getFullYear(), month - 1, day)
@@ -48,20 +48,29 @@ export function daysUntilBirthday(birthday) {
   return Math.round((next - today) / 86_400_000)
 }
 
-export function formatBirthday(birthday) {
-  if (!birthday) return null
-  const [, month, day] = birthday.split('-').map(Number)
+export function formatDayMonth(date) {
+  if (!date) return null
+  const [, month, day] = date.split('-').map(Number)
   return new Date(2000, month - 1, day).toLocaleDateString(undefined, {
     day: 'numeric',
     month: 'long',
   })
 }
 
-export function birthdayLabel(birthday) {
-  const days = daysUntilBirthday(birthday)
+function occasionLabel(date, name) {
+  const days = daysUntil(date)
   if (days === null) return null
-  if (days === 0) return 'Birthday today 🎉'
-  if (days === 1) return 'Birthday tomorrow'
-  if (days <= 60) return `Birthday in ${days} days`
-  return `Birthday ${formatBirthday(birthday)}`
+  if (days === 0) return `${name} today 🎉`
+  if (days === 1) return `${name} tomorrow`
+  if (days <= 60) return `${name} in ${days} days`
+  return `${name} ${formatDayMonth(date)}`
+}
+
+export const birthdayLabel = (date) => occasionLabel(date, 'Birthday')
+export const namedayLabel = (date) => occasionLabel(date, 'Name day')
+
+/** Days until whichever comes first: birthday or name day. */
+export function daysUntilNextOccasion(person) {
+  const days = [daysUntil(person.birthday), daysUntil(person.nameday)].filter((d) => d !== null)
+  return days.length ? Math.min(...days) : null
 }

@@ -35,7 +35,8 @@ create table if not exists public.profiles (
   full_name   text not null default '',
   avatar_url  text,
   birthday    date,
-  bio         text check (char_length(bio) <= 280),
+  nameday     date, -- only day and month matter; year is stored as 2000
+  bio        text check (char_length(bio) <= 280),
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
@@ -155,3 +156,33 @@ create policy "Users can claim other people's items"
 create policy "Users can release their own claims"
   on public.claims for delete to authenticated
   using (claimer_id = public.current_user_id());
+
+-- ============================================================================
+-- Storage: wish photos
+-- Public bucket (files readable by URL). Uploads and deletes are limited to
+-- the uploader's own folder: "<clerk user id>/<file>".
+-- ============================================================================
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('wish-photos', 'wish-photos', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do nothing;
+
+create policy "Users can upload wish photos to their own folder"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'wish-photos'
+    and (storage.foldername(name))[1] = public.current_user_id()
+  );
+
+create policy "Users can see their own wish photo files"
+  on storage.objects for select to authenticated
+  using (
+    bucket_id = 'wish-photos'
+    and (storage.foldername(name))[1] = public.current_user_id()
+  );
+
+create policy "Users can delete their own wish photos"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'wish-photos'
+    and (storage.foldername(name))[1] = public.current_user_id()
+  );

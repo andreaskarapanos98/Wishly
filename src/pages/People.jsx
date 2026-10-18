@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Users, CalendarHeart, ChevronRight } from 'lucide-react'
+import { Search, Users, ChevronRight } from 'lucide-react'
 import Avatar from '../components/Avatar.jsx'
+import Occasions from '../components/Occasions.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { PageLoader } from '../components/AppLayout.jsx'
 import { useSupabase } from '../lib/supabase.jsx'
 import { useProfile } from '../lib/profile.jsx'
 import { useToast, errorMessage } from '../lib/toast.jsx'
 import { listPeople } from '../lib/api.js'
-import { birthdayLabel, daysUntilBirthday } from '../lib/format.js'
+import { daysUntilNextOccasion } from '../lib/format.js'
 
 export default function People() {
   const sb = useSupabase()
@@ -34,8 +35,8 @@ export default function People() {
       .filter((p) => p.id !== profile.id)
       .filter((p) => !q || p.full_name.toLowerCase().includes(q))
       .sort((a, b) => {
-        const da = daysUntilBirthday(a.birthday) ?? 999
-        const db = daysUntilBirthday(b.birthday) ?? 999
+        const da = daysUntilNextOccasion(a) ?? 999
+        const db = daysUntilNextOccasion(b) ?? 999
         return da - db || a.full_name.localeCompare(b.full_name)
       })
   }, [people, query, profile.id])
@@ -46,7 +47,9 @@ export default function People() {
         <div>
           <p className="eyebrow">People</p>
           <h1 className="page-title">Your circle</h1>
-          <p className="page-sub">Upcoming birthdays first. Tap someone to see their wishlist.</p>
+          <p className="page-sub">
+            Upcoming birthdays and name days first. Tap someone to see their wishlist.
+          </p>
         </div>
         <label className="search">
           <Search size={17} />
@@ -69,27 +72,19 @@ export default function People() {
         </EmptyState>
       ) : (
         <div className="people-grid">
-          {visible.map((person) => {
-            const days = daysUntilBirthday(person.birthday)
-            const soon = days !== null && days <= 30
-            return (
-              <Link key={person.id} to={`/app/people/${person.id}`} className="person-card">
-                <Avatar person={person} size={52} />
-                <div className="person-card__body">
-                  <h3 className="person-card__name">{person.full_name || 'Unnamed friend'}</h3>
-                  <p className="person-card__meta">
-                    {person.itemCount} {person.itemCount === 1 ? 'wish' : 'wishes'}
-                  </p>
-                  {person.birthday && (
-                    <span className={`chip ${soon ? 'chip--accent' : ''}`}>
-                      <CalendarHeart size={13} /> {birthdayLabel(person.birthday)}
-                    </span>
-                  )}
-                </div>
-                <ChevronRight className="person-card__chevron" size={18} />
-              </Link>
-            )
-          })}
+          {visible.map((person) => (
+            <Link key={person.id} to={`/app/people/${person.id}`} className="person-card">
+              <Avatar person={person} size={52} />
+              <div className="person-card__body">
+                <h3 className="person-card__name">{person.full_name || 'Unnamed friend'}</h3>
+                <p className="person-card__meta">
+                  {person.itemCount} {person.itemCount === 1 ? 'wish' : 'wishes'}
+                </p>
+                <Occasions person={person} variant="chips" />
+              </div>
+              <ChevronRight className="person-card__chevron" size={18} />
+            </Link>
+          ))}
         </div>
       )}
     </>

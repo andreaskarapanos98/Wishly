@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, Gift, CalendarHeart, Settings2, EyeOff } from 'lucide-react'
+import { Plus, Gift, Settings2, EyeOff } from 'lucide-react'
 import Avatar from '../components/Avatar.jsx'
+import Occasions from '../components/Occasions.jsx'
 import ItemCard from '../components/ItemCard.jsx'
 import ItemForm from '../components/ItemForm.jsx'
 import ProfileForm from '../components/ProfileForm.jsx'
@@ -10,7 +11,8 @@ import { useSupabase } from '../lib/supabase.jsx'
 import { useProfile } from '../lib/profile.jsx'
 import { useToast, errorMessage } from '../lib/toast.jsx'
 import { createItem, deleteItem, listItems, updateItem } from '../lib/api.js'
-import { birthdayLabel, firstName } from '../lib/format.js'
+import { deleteWishPhoto } from '../lib/photos.js'
+import { firstName } from '../lib/format.js'
 
 export default function MyWishlist() {
   const sb = useSupabase()
@@ -44,8 +46,10 @@ export default function MyWishlist() {
       }
       setEditing(null)
       load()
+      return true
     } catch (err) {
       toast(errorMessage(err), 'error')
+      return false
     }
   }
 
@@ -53,6 +57,7 @@ export default function MyWishlist() {
     if (!window.confirm(`Remove “${item.title}” from your wishlist?`)) return
     try {
       await deleteItem(sb, item.id)
+      deleteWishPhoto(sb, item.image_url)
       setItems((list) => list.filter((i) => i.id !== item.id))
       toast('Removed from your wishlist')
     } catch (err) {
@@ -70,7 +75,7 @@ export default function MyWishlist() {
     }
   }
 
-  const birthday = birthdayLabel(profile.birthday)
+  const hasDates = profile.birthday || profile.nameday
 
   return (
     <>
@@ -81,13 +86,11 @@ export default function MyWishlist() {
             <p className="eyebrow">My wishlist</p>
             <h1 className="page-title">Hi, {firstName(profile.full_name)}</h1>
             <p className="page-sub">
-              {birthday ? (
-                <>
-                  <CalendarHeart size={15} /> {birthday}
-                </>
+              {hasDates ? (
+                <Occasions person={profile} iconSize={15} />
               ) : (
                 <button className="btn btn--link" onClick={() => setEditingProfile(true)}>
-                  Add your birthday so friends know when to shop
+                  Add your birthday and name day so friends know when to shop
                 </button>
               )}
             </p>

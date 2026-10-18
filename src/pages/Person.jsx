@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CalendarHeart, Gift, UserX } from 'lucide-react'
+import { ArrowLeft, Gift, UserX } from 'lucide-react'
 import Avatar from '../components/Avatar.jsx'
+import Occasions from '../components/Occasions.jsx'
 import ItemCard from '../components/ItemCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { PageLoader } from '../components/AppLayout.jsx'
@@ -9,7 +10,7 @@ import { useSupabase } from '../lib/supabase.jsx'
 import { useProfile } from '../lib/profile.jsx'
 import { useToast, errorMessage } from '../lib/toast.jsx'
 import { claimItem, getProfile, listItems, releaseClaim } from '../lib/api.js'
-import { birthdayLabel, firstName } from '../lib/format.js'
+import { firstName } from '../lib/format.js'
 
 export default function Person() {
   const { personId } = useParams()
@@ -90,9 +91,9 @@ export default function Person() {
             <p className="eyebrow">Wishlist</p>
             <h1 className="page-title">{person.full_name}</h1>
             <p className="page-sub">
-              {person.birthday && (
+              {(person.birthday || person.nameday) && (
                 <>
-                  <CalendarHeart size={15} /> {birthdayLabel(person.birthday)}
+                  <Occasions person={person} iconSize={15} />
                   <span className="dot">·</span>
                 </>
               )}

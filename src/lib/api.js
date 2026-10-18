@@ -2,7 +2,7 @@
 // from useSupabase(). Row Level Security (see supabase/schema.sql) decides
 // what each user can read and write; these helpers just shape the queries.
 
-const PERSON_FIELDS = 'id, full_name, avatar_url, birthday, bio'
+const PERSON_FIELDS = 'id, full_name, avatar_url, birthday, nameday, bio'
 
 // The explicit "!constraint_name" hints tell PostgREST exactly which foreign
 // key to follow, since profiles is linked to items both directly and via claims.
