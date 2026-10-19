@@ -647,6 +647,18 @@ textarea.input {
   font-size: 32px;
 }
 
+.setup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.setup__hint {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
 .setup__list {
   margin: 0;
   padding-left: 20px;

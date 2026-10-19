@@ -2,7 +2,7 @@
 
 A private wishlist app for you and your friends. Add what you'd love to receive, browse your friends' wishlists, and tap **"I'll buy it"** to claim a gift. Everyone else sees that it's taken, but the birthday person never does.
 
-**Stack:** React + Vite (static, hosted on GitHub Pages) · [Clerk](https://clerk.com) for Google sign-in · [Supabase](https://supabase.com) Postgres with Row Level Security. There's no custom backend: the browser talks to Supabase directly, and database policies decide who can do what.
+**Stack:** React + Vite (static, hosted on GitHub Pages) · [Clerk](https://clerk.com) for sign-in (Google or email code) · [Supabase](https://supabase.com) Postgres with Row Level Security. There's no custom backend: the browser talks to Supabase directly, and database policies decide who can do what.
 
 ## Features
 
@@ -27,7 +27,7 @@ Clerk issues a session token, and Supabase verifies it through its Clerk third-p
 
 ### 1. Clerk (sign-in)
 
-1. Create an application at [dashboard.clerk.com](https://dashboard.clerk.com). Under sign-in options, enable **Google** only.
+1. Create an application at [dashboard.clerk.com](https://dashboard.clerk.com). Under **User & authentication**, enable **Google** and **Email** (sign-up and sign-in with an email verification code, no password), and on the **User model** tab require **First and last name**.
 2. Open the [Supabase integration setup](https://dashboard.clerk.com/setup/supabase), pick your app and click **Activate Supabase integration**. Copy the **Clerk domain** it shows.
 3. Copy your **Publishable key** from **API keys**.
 

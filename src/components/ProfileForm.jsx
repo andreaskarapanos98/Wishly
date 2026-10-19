@@ -54,7 +54,7 @@ export default function ProfileForm({ profile, onSubmit, onClose }) {
   return (
     <Modal
       title="Your details"
-      subtitle="Your name and photo come from your Google account."
+      subtitle="To change your name or photo, use the account menu in the top right."
       onClose={onClose}
     >
       <form className="form" onSubmit={handleSubmit}>

@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { SignInButton, UserButton, useAuth } from '@clerk/react'
+import { SignInButton, SignUpButton, UserButton, useAuth } from '@clerk/react'
 import { Gift, Users, ShoppingBag, Loader2, Lock } from 'lucide-react'
 import Logo, { LogoMark } from './Logo.jsx'
 import { ProfileProvider, useProfile } from '../lib/profile.jsx'
@@ -87,9 +87,15 @@ function SignInWall() {
           <Lock size={14} style={{ verticalAlign: '-2px' }} /> Wishlists are only visible to friends
           who have signed in.
         </p>
-        <SignInButton mode="modal">
-          <button className="btn btn--primary btn--lg">Continue with Google</button>
-        </SignInButton>
+        <div className="setup__actions">
+          <SignInButton mode="modal">
+            <button className="btn btn--primary btn--lg">Sign in</button>
+          </SignInButton>
+          <SignUpButton mode="modal">
+            <button className="btn btn--outline btn--lg">Create an account</button>
+          </SignUpButton>
+        </div>
+        <p className="setup__hint">Use your Google account or any email address.</p>
       </div>
     </main>
   )

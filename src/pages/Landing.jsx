@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { SignInButton, useAuth } from '@clerk/react'
+import { SignInButton, SignUpButton, useAuth } from '@clerk/react'
 import {
   ArrowRight,
   CalendarHeart,
@@ -24,11 +24,11 @@ function PrimaryCta({ children, className = 'btn btn--primary btn--lg' }) {
     )
   }
   return (
-    <SignInButton mode="modal">
+    <SignUpButton mode="modal">
       <button className={className}>
         {children} <ArrowRight size={18} />
       </button>
-    </SignInButton>
+    </SignUpButton>
   )
 }
 
@@ -78,7 +78,7 @@ export default function Landing() {
               </a>
             </div>
             <p className="hero__note">
-              <ShieldCheck size={15} /> Free · Sign in with Google · No ads, ever
+              <ShieldCheck size={15} /> Free · Sign in with Google or email · No ads, ever
             </p>
           </div>
 
