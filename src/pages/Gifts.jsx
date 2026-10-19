@@ -63,8 +63,8 @@ export default function Gifts() {
           icon={ShoppingBag}
           title="You haven’t claimed any gifts yet"
           action={
-            <Link to="/app/people" className="btn btn--primary">
-              Browse your friends
+            <Link to="/app/friends" className="btn btn--primary">
+              See your friends
             </Link>
           }
         >
@@ -74,13 +74,13 @@ export default function Gifts() {
         <ul className="gift-list">
           {claims.map(({ item }) => (
             <li key={item.id} className="gift-row">
-              <Link to={`/app/people/${item.owner.id}`} className="gift-row__person">
+              <Link to={`/app/friends/${item.owner.id}`} className="gift-row__person">
                 <Avatar person={item.owner} size={44} />
               </Link>
               <div className="gift-row__body">
                 <h3 className="gift-row__title">{item.title}</h3>
                 <p className="gift-row__meta">
-                  For <Link to={`/app/people/${item.owner.id}`}>{item.owner.full_name}</Link>
+                  For <Link to={`/app/friends/${item.owner.id}`}>{item.owner.full_name}</Link>
                   {(item.owner.birthday || item.owner.nameday) && (
                     <>
                       <span className="dot">·</span>

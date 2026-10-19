@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Gift, UserX } from 'lucide-react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Gift, UserMinus, UserX } from 'lucide-react'
 import Avatar from '../components/Avatar.jsx'
 import Occasions from '../components/Occasions.jsx'
 import ItemCard from '../components/ItemCard.jsx'
@@ -9,15 +9,25 @@ import { PageLoader } from '../components/AppLayout.jsx'
 import { useSupabase } from '../lib/supabase.jsx'
 import { useProfile } from '../lib/profile.jsx'
 import { useToast, errorMessage } from '../lib/toast.jsx'
-import { claimItem, getProfile, listItems, releaseClaim } from '../lib/api.js'
+import { useFriends } from '../lib/friends.jsx'
+import { claimItem, getProfile, listItems, releaseClaim, removeFriendship } from '../lib/api.js'
 import { firstName } from '../lib/format.js'
 
 export default function Person() {
   const { personId } = useParams()
   const sb = useSupabase()
   const toast = useToast()
+  const navigate = useNavigate()
   const { profile: me } = useProfile()
-  const [person, setPerson] = useState(undefined) // undefined = loading, null = not found
+  const {
+    friends = [],
+    incoming = [],
+    outgoing = [],
+    loading: friendsLoading,
+    refresh: refreshFriends,
+  } = useFriends()
+  const friendship = friends.find((f) => f.person.id === personId)
+  const [person, setPerson] = useState(undefined) // undefined = loading, null = not visible
   const [items, setItems] = useState(null)
 
   const loadItems = useCallback(async () => {
@@ -60,18 +70,40 @@ export default function Person() {
     loadItems()
   }
 
-  if (person === undefined) return <PageLoader />
-  if (person === null) {
+  async function handleUnfriend() {
+    if (!window.confirm(`Remove ${person.full_name} from your friends? You won’t see each other’s wishlists.`)) {
+      return
+    }
+    try {
+      await removeFriendship(sb, friendship.id)
+      await refreshFriends()
+      toast(`${firstName(person.full_name)} was removed from your friends`)
+      navigate('/app/friends', { replace: true })
+    } catch (err) {
+      toast(errorMessage(err), 'error')
+    }
+  }
+
+  if (person === undefined || friendsLoading) return <PageLoader />
+
+  // Wishlists are only visible between accepted friends (enforced by the database too).
+  if (!friendship) {
+    const pendingIn = incoming.some((r) => r.person.id === personId)
+    const pendingOut = outgoing.some((r) => r.person.id === personId)
     return (
       <EmptyState
         icon={UserX}
-        title="We couldn’t find this person"
+        title={person ? `You and ${firstName(person.full_name)} aren’t friends yet` : 'You can’t see this wishlist'}
         action={
-          <Link to="/app/people" className="btn btn--ghost">
-            <ArrowLeft size={16} /> Back to people
+          <Link to={pendingIn ? '/app/friends?tab=requests' : '/app/friends?tab=find'} className="btn btn--primary">
+            {pendingIn ? 'See their request' : 'Find people'}
           </Link>
         }
-      />
+      >
+        {pendingOut
+          ? 'Your friend request is waiting for them to accept.'
+          : 'Wishlists are only visible to friends. Send a friend request, and once it’s accepted you’ll see each other’s lists.'}
+      </EmptyState>
     )
   }
 
@@ -80,9 +112,14 @@ export default function Person() {
 
   return (
     <>
-      <Link to="/app/people" className="back-link">
-        <ArrowLeft size={16} /> All people
-      </Link>
+      <div className="back-row">
+        <Link to="/app/friends" className="back-link">
+          <ArrowLeft size={16} /> All friends
+        </Link>
+        <button className="btn btn--ghost btn--sm btn--danger" onClick={handleUnfriend}>
+          <UserMinus size={15} /> Remove friend
+        </button>
+      </div>
 
       <section className="page-head">
         <div className="page-head__person">

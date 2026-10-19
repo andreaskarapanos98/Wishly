@@ -28,12 +28,12 @@ function normalizeClaim(item) {
 
 // ---------------------------------------------------------------- profiles
 
-export async function syncProfile(sb, { id, full_name, avatar_url }) {
+export async function syncProfile(sb, { id, full_name, avatar_url, email }) {
   // Upsert only touches the columns we send, so birthday and bio are kept.
   return unwrap(
     await sb
       .from('profiles')
-      .upsert({ id, full_name, avatar_url }, { onConflict: 'id' })
+      .upsert({ id, full_name, avatar_url, email }, { onConflict: 'id' })
       .select(PERSON_FIELDS)
       .single(),
   )
@@ -49,14 +49,78 @@ export async function updateProfile(sb, id, changes) {
   )
 }
 
-export async function listPeople(sb) {
+// ---------------------------------------------------------------- friends
+
+const FRIEND_FIELDS = `${PERSON_FIELDS}, items:wishlist_items!wishlist_items_owner_id_fkey(count)`
+
+/**
+ * All of the current user's friendships, split into accepted friends,
+ * incoming requests and outgoing requests. Each entry has `person` (the
+ * other side) and the friendship `id`.
+ */
+export async function listFriendships(sb, userId) {
   const rows = unwrap(
     await sb
-      .from('profiles')
-      .select(`${PERSON_FIELDS}, items:wishlist_items!wishlist_items_owner_id_fkey(count)`)
-      .order('full_name'),
+      .from('friendships')
+      .select(
+        `id, status, requester_id, addressee_id, created_at,
+         requester:profiles!friendships_requester_id_fkey ( ${FRIEND_FIELDS} ),
+         addressee:profiles!friendships_addressee_id_fkey ( ${FRIEND_FIELDS} )`,
+      )
+      .order('created_at', { ascending: false }),
   )
-  return rows.map(({ items, ...person }) => ({ ...person, itemCount: items?.[0]?.count ?? 0 }))
+
+  const result = { friends: [], incoming: [], outgoing: [] }
+  for (const row of rows) {
+    const other = row.requester_id === userId ? row.addressee : row.requester
+    if (!other) continue
+    const { items, ...person } = other
+    const entry = { id: row.id, person: { ...person, itemCount: items?.[0]?.count ?? 0 } }
+    if (row.status === 'accepted') result.friends.push(entry)
+    else if (row.addressee_id === userId) result.incoming.push(entry)
+    else result.outgoing.push(entry)
+  }
+  return result
+}
+
+/** Everyone except me (name + photo only) with status: none / sent / received / friends. */
+export async function findPeople(sb, search = '') {
+  return unwrap(await sb.rpc('find_people', { search: search.trim() }))
+}
+
+export async function sendFriendRequest(sb, personId) {
+  const { error } = await sb.from('friendships').insert({ addressee_id: personId })
+  if (error?.code === '23505') {
+    throw new Error('You already have a friend request with this person.')
+  }
+  if (error) throw error
+}
+
+export async function acceptFriendRequest(sb, friendshipId) {
+  unwrap(
+    await sb
+      .from('friendships')
+      .update({ status: 'accepted', responded_at: new Date().toISOString() })
+      .eq('id', friendshipId),
+  )
+}
+
+/** Declines, cancels or unfriends, depending on the friendship's state. */
+export async function removeFriendship(sb, friendshipId) {
+  unwrap(await sb.from('friendships').delete().eq('id', friendshipId))
+}
+
+/** Removes the friendship (or request) between the current user and a person. */
+export async function removeFriendshipWith(sb, userId, personId) {
+  unwrap(
+    await sb
+      .from('friendships')
+      .delete()
+      .or(
+        `and(requester_id.eq.${userId},addressee_id.eq.${personId}),` +
+          `and(requester_id.eq.${personId},addressee_id.eq.${userId})`,
+      ),
+  )
 }
 
 // ---------------------------------------------------------------- items

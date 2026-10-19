@@ -22,13 +22,14 @@ export function ProfileProvider({ children }) {
       id: user.id,
       full_name: user.fullName || user.username || user.primaryEmailAddress?.emailAddress || '',
       avatar_url: user.imageUrl,
+      email: user.primaryEmailAddress?.emailAddress ?? null,
     })
       .then((row) => !cancelled && setProfile(row))
       .catch((err) => !cancelled && setError(err))
     return () => {
       cancelled = true
     }
-  }, [sb, isLoaded, user?.id, user?.fullName, user?.imageUrl]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sb, isLoaded, user?.id, user?.fullName, user?.imageUrl, user?.primaryEmailAddress?.emailAddress]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveProfile = useCallback(
     async (changes) => {

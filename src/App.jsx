@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { ClerkProvider } from '@clerk/react'
 import { config, missingConfig } from './lib/config.js'
 import { SupabaseProvider } from './lib/supabase.jsx'
@@ -7,7 +7,7 @@ import SetupNotice from './components/SetupNotice.jsx'
 import AppLayout from './components/AppLayout.jsx'
 import Landing from './pages/Landing.jsx'
 import MyWishlist from './pages/MyWishlist.jsx'
-import People from './pages/People.jsx'
+import Friends from './pages/Friends.jsx'
 import Person from './pages/Person.jsx'
 import Gifts from './pages/Gifts.jsx'
 import NotFound from './pages/NotFound.jsx'
@@ -41,8 +41,11 @@ export default function App() {
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Navigate to="wishlist" replace />} />
               <Route path="wishlist" element={<MyWishlist />} />
-              <Route path="people" element={<People />} />
-              <Route path="people/:personId" element={<Person />} />
+              <Route path="friends" element={<Friends />} />
+              <Route path="friends/:personId" element={<Person />} />
+              {/* Old links from before friendships */}
+              <Route path="people" element={<Navigate to="/app/friends" replace />} />
+              <Route path="people/:personId" element={<LegacyPersonRedirect />} />
               <Route path="gifts" element={<Gifts />} />
             </Route>
             <Route path="*" element={<NotFound />} />
@@ -51,4 +54,9 @@ export default function App() {
       </SupabaseProvider>
     </ClerkProvider>
   )
+}
+
+function LegacyPersonRedirect() {
+  const { personId } = useParams()
+  return <Navigate to={`/app/friends/${personId}`} replace />
 }

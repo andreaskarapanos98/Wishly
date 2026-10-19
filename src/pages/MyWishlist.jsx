@@ -109,8 +109,8 @@ export default function MyWishlist() {
       {profile.bio && <p className="bio">“{profile.bio}”</p>}
 
       <p className="hint">
-        <EyeOff size={15} /> Friends can claim gifts from your list. You won’t see who, so it stays
-        a surprise.
+        <EyeOff size={15} /> Only your friends can see this list. They can claim gifts from it, but
+        you won’t see who, so it stays a surprise.
       </p>
 
       {items === null ? (

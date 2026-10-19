@@ -104,10 +104,10 @@ export default function Landing() {
             </li>
             <li className="step">
               <span className="step__num">02</span>
-              <h3>Browse your friends</h3>
+              <h3>Add your friends</h3>
               <p>
-                The People tab shows everyone in your circle, sorted by whose birthday is
-                coming up next, with their wishlist one tap away.
+                Find friends by name or email and send a request. Once they accept, you can
+                see each other’s wishlists, sorted by whose birthday is coming up next.
               </p>
             </li>
             <li className="step">
@@ -133,8 +133,9 @@ export default function Landing() {
             <Feature icon={EyeOff} title="Surprises stay secret">
               You’ll never see who claimed what on your own list. Only your friends can.
             </Feature>
-            <Feature icon={Users} title="No more duplicates">
-              One claim per gift. When someone takes it, everyone else knows right away.
+            <Feature icon={Users} title="Friends only">
+              Your list is visible only to friends you’ve accepted. One claim per gift, so
+              nobody buys the same thing twice.
             </Feature>
             <Feature icon={CalendarHeart} title="Birthday countdowns">
               Add your birthday once and friends see it coming in plenty of time.

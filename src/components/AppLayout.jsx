@@ -3,10 +3,11 @@ import { SignInButton, SignUpButton, UserButton, useAuth } from '@clerk/react'
 import { Gift, Users, ShoppingBag, Loader2, Lock } from 'lucide-react'
 import Logo, { LogoMark } from './Logo.jsx'
 import { ProfileProvider, useProfile } from '../lib/profile.jsx'
+import { FriendsProvider, useFriends } from '../lib/friends.jsx'
 
 const NAV = [
   { to: '/app/wishlist', label: 'My wishlist', icon: Gift },
-  { to: '/app/people', label: 'People', icon: Users },
+  { to: '/app/friends', label: 'Friends', icon: Users, badge: 'requests' },
   { to: '/app/gifts', label: "Gifts I'm buying", icon: ShoppingBag },
 ]
 
@@ -18,47 +19,63 @@ export default function AppLayout() {
 
   return (
     <ProfileProvider>
-      <div className="app">
-        <header className="app-header">
-          <div className="container app-header__inner">
-            <Logo to="/" />
-            <nav className="app-nav" aria-label="Main">
-              {NAV.map(({ to, label, icon: Icon }) => (
-                <NavLink key={to} to={to} className="app-nav__link">
-                  <Icon size={17} strokeWidth={1.8} />
-                  <span>{label}</span>
-                </NavLink>
-              ))}
-            </nav>
-            <UserButton appearance={{ elements: { avatarBox: { width: 36, height: 36 } } }} />
-          </div>
-        </header>
-        <main className="app-main">
-          <div className="container">
-            <ProfileGate />
-          </div>
-        </main>
-      </div>
+      <AppShell />
     </ProfileProvider>
   )
 }
 
-// Wait until the profile row exists before rendering pages that rely on it.
-function ProfileGate() {
+function AppShell() {
   const { profile, error } = useProfile()
-  if (error) {
-    return (
-      <div className="notice notice--error">
-        <strong>We couldn't connect to the database.</strong>
-        <span>
-          {error.message} — check that <code>supabase/schema.sql</code> has been run and that Clerk
-          is added as a third-party auth provider in Supabase.
-        </span>
-      </div>
-    )
-  }
-  if (!profile) return <PageLoader />
-  return <Outlet />
+
+  const shell = (
+    <div className="app">
+      <header className="app-header">
+        <div className="container app-header__inner">
+          <Logo to="/" />
+          <nav className="app-nav" aria-label="Main">
+            {NAV.map(({ to, label, icon: Icon, badge }) => (
+              <NavLink key={to} to={to} className="app-nav__link">
+                <Icon size={17} strokeWidth={1.8} />
+                <span>{label}</span>
+                {badge && <RequestsBadge />}
+              </NavLink>
+            ))}
+          </nav>
+          <UserButton appearance={{ elements: { avatarBox: { width: 36, height: 36 } } }} />
+        </div>
+      </header>
+      <main className="app-main">
+        <div className="container">
+          {error ? (
+            <div className="notice notice--error">
+              <strong>We couldn't connect to the database.</strong>
+              <span>
+                {error.message} — check that <code>supabase/schema.sql</code> has been run and that
+                Clerk is added as a third-party auth provider in Supabase.
+              </span>
+            </div>
+          ) : profile ? (
+            <Outlet />
+          ) : (
+            <PageLoader />
+          )}
+        </div>
+      </main>
+    </div>
+  )
+
+  // Pages rely on the profile row, so friends load only once it exists.
+  return profile ? <FriendsProvider>{shell}</FriendsProvider> : shell
+}
+
+function RequestsBadge() {
+  const count = useFriends()?.incoming?.length ?? 0
+  if (!count) return null
+  return (
+    <span className="nav-badge" aria-label={`${count} friend request${count === 1 ? '' : 's'}`}>
+      {count}
+    </span>
+  )
 }
 
 export function PageLoader() {
