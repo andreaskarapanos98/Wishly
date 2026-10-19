@@ -218,7 +218,7 @@ function HeroPreview() {
             <span>€279 · store.example</span>
           </div>
           <span className="preview__pill preview__pill--taken">
-            <Check size={12} /> Maria is buying
+            <Check size={12} /> Someone’s buying
           </span>
         </div>
 

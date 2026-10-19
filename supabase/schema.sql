@@ -250,12 +250,13 @@ create policy "Users can remove from their own wishlist"
   using (owner_id = public.current_user_id());
 
 -- claims --------------------------------------------------------------------
--- The item must be visible to you (so, given the policy above, a friend's item)
--- and not your own. Keeps the surprise: owners never see claims on their items.
-create policy "Claims on friends' items are visible, never to the owner"
+-- Claims are anonymous: you only ever see your own claim rows. Friends learn
+-- that an item is taken through claimed_items() below, never who took it.
+create policy "Users see only their own claims"
   on public.claims for select to authenticated
   using (
-    exists (
+    claimer_id = public.current_user_id()
+    and exists (
       select 1 from public.wishlist_items i
       where i.id = claims.item_id
         and i.owner_id <> public.current_user_id()
@@ -306,3 +307,25 @@ create policy "Users can delete their own wish photos"
     bucket_id = 'wish-photos'
     and (storage.foldername(name))[1] = public.current_user_id()
   );
+
+-- ============================================================================
+-- Which of a friend's items are taken, without saying by whom.
+-- Returns nothing for your own list (keeps the surprise) or for non-friends.
+-- ============================================================================
+create or replace function public.claimed_items(person text)
+returns table (item_id uuid, mine boolean)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select c.item_id, c.claimer_id = public.current_user_id()
+  from public.claims c
+  join public.wishlist_items i on i.id = c.item_id
+  where i.owner_id = person
+    and person <> public.current_user_id()
+    and public.is_friend(person)
+$$;
+
+revoke execute on function public.claimed_items(text) from public, anon;
+grant execute on function public.claimed_items(text) to authenticated;

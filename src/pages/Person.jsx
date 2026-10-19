@@ -32,7 +32,7 @@ export default function Person() {
 
   const loadItems = useCallback(async () => {
     try {
-      setItems(await listItems(sb, personId))
+      setItems(await listItems(sb, personId, { withClaims: true }))
     } catch (err) {
       toast(errorMessage(err), 'error')
       setItems([])
@@ -155,7 +155,6 @@ export default function Person() {
               key={item.id}
               item={item}
               mode="friend"
-              currentUserId={me.id}
               onClaim={handleClaim}
               onRelease={handleRelease}
             />

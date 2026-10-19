@@ -1,21 +1,21 @@
 import { useState } from 'react'
 import { ExternalLink, Pencil, Trash2, Gift, Check, Loader2, Heart } from 'lucide-react'
-import Avatar from './Avatar.jsx'
-import { firstName, formatPrice, hostname } from '../lib/format.js'
+import { formatPrice, hostname } from '../lib/format.js'
 import { isUploadedPhoto } from '../lib/photos.js'
 
 /**
  * mode="owner"  → edit / delete buttons, claims are never shown (RLS hides them anyway)
- * mode="friend" → "I'll buy it" button and who is buying it
+ * mode="friend" → "I'll buy it" button; a taken item says "Someone is buying
+ *                  this" (or "You're buying this"). Buyers are never named.
  */
-export default function ItemCard({ item, mode, currentUserId, onEdit, onDelete, onClaim, onRelease }) {
+export default function ItemCard({ item, mode, onEdit, onDelete, onClaim, onRelease }) {
   const [busy, setBusy] = useState(false)
   const [imgBroken, setImgBroken] = useState(false)
 
   const price = formatPrice(item.price, item.currency)
   const site = hostname(item.url)
   const claim = mode === 'friend' ? item.claim : null
-  const claimedByMe = claim?.claimer_id === currentUserId
+  const claimedByMe = Boolean(claim?.mine)
 
   async function run(action) {
     setBusy(true)
@@ -90,16 +90,12 @@ export default function ItemCard({ item, mode, currentUserId, onEdit, onDelete, 
         )}
 
         {mode === 'friend' && claim && (
-          <div className="claim">
-            <Avatar person={claim.claimer} size={26} />
+          <div className={`claim ${claimedByMe ? '' : 'claim--other'}`}>
+            <span className="claim__icon">
+              {claimedByMe ? <Check size={15} /> : <Gift size={15} />}
+            </span>
             <span className="claim__text">
-              {claimedByMe ? (
-                <>
-                  <Check size={14} /> You're buying this
-                </>
-              ) : (
-                <>{firstName(claim.claimer?.full_name)} is buying this</>
-              )}
+              {claimedByMe ? 'You’re buying this' : 'Someone is buying this'}
             </span>
             {claimedByMe && (
               <button

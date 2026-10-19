@@ -4,26 +4,12 @@
 
 const PERSON_FIELDS = 'id, full_name, avatar_url, birthday, nameday, bio'
 
-// The explicit "!constraint_name" hints tell PostgREST exactly which foreign
-// key to follow, since profiles is linked to items both directly and via claims.
-const ITEM_WITH_CLAIM = `
-  *,
-  claim:claims!claims_item_id_fkey (
-    claimer_id,
-    created_at,
-    claimer:profiles!claims_claimer_id_fkey ( id, full_name, avatar_url )
-  )
-`
+// Embeds below use explicit "!constraint_name" hints so PostgREST knows which
+// foreign key to follow, since profiles links to items in several ways.
 
 function unwrap({ data, error }) {
   if (error) throw error
   return data
-}
-
-// A one-to-one embed can come back as an object or a one-element array.
-function normalizeClaim(item) {
-  const claim = Array.isArray(item.claim) ? item.claim[0] ?? null : item.claim ?? null
-  return { ...item, claim }
 }
 
 // ---------------------------------------------------------------- profiles
@@ -125,16 +111,23 @@ export async function removeFriendshipWith(sb, userId, personId) {
 
 // ---------------------------------------------------------------- items
 
-export async function listItems(sb, ownerId) {
-  const rows = unwrap(
-    await sb
+/**
+ * A person's wishes. For a friend's list (`withClaims`), each item gets
+ * `claim: { mine }` when it's taken. Who took it is never available.
+ */
+export async function listItems(sb, ownerId, { withClaims = false } = {}) {
+  const [items, claimed] = await Promise.all([
+    sb
       .from('wishlist_items')
-      .select(ITEM_WITH_CLAIM)
+      .select('*')
       .eq('owner_id', ownerId)
       .order('priority', { ascending: false })
-      .order('created_at', { ascending: false }),
-  )
-  return rows.map(normalizeClaim)
+      .order('created_at', { ascending: false })
+      .then(unwrap),
+    withClaims ? sb.rpc('claimed_items', { person: ownerId }).then(unwrap) : [],
+  ])
+  const claims = new Map(claimed.map((c) => [c.item_id, { mine: c.mine }]))
+  return items.map((item) => ({ ...item, claim: claims.get(item.id) ?? null }))
 }
 
 export async function createItem(sb, item) {
