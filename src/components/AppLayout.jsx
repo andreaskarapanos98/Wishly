@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { SignInButton, SignUpButton, UserButton, useAuth } from '@clerk/react'
-import { Gift, Users, ShoppingBag, Loader2, Lock } from 'lucide-react'
+import { Gift, Users, ShoppingBag, Loader2, Lock, CalendarHeart } from 'lucide-react'
 import Logo, { LogoMark } from './Logo.jsx'
 import { ProfileProvider, useProfile } from '../lib/profile.jsx'
 import { FriendsProvider, useFriends } from '../lib/friends.jsx'
@@ -41,7 +41,7 @@ function AppShell() {
               </NavLink>
             ))}
           </nav>
-          <UserButton appearance={{ elements: { avatarBox: { width: 36, height: 36 } } }} />
+          <AccountMenu />
         </div>
       </header>
       <main className="app-main">
@@ -66,6 +66,27 @@ function AppShell() {
 
   // Pages rely on the profile row, so friends load only once it exists.
   return profile ? <FriendsProvider>{shell}</FriendsProvider> : shell
+}
+
+// Clerk's avatar menu, plus our own "Birthday & name day" item.
+// "Manage account" (name, photo, email) and "Sign out" stay Clerk's.
+function AccountMenu() {
+  const { profile, openDetails } = useProfile()
+  return (
+    <UserButton appearance={{ elements: { avatarBox: { width: 36, height: 36 } } }}>
+      <UserButton.MenuItems>
+        {profile && (
+          <UserButton.Action
+            label="Birthday & name day"
+            labelIcon={<CalendarHeart size={15} />}
+            onClick={openDetails}
+          />
+        )}
+        <UserButton.Action label="manageAccount" />
+        <UserButton.Action label="signOut" />
+      </UserButton.MenuItems>
+    </UserButton>
+  )
 }
 
 function RequestsBadge() {

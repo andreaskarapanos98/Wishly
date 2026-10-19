@@ -4,7 +4,6 @@ import Avatar from '../components/Avatar.jsx'
 import Occasions from '../components/Occasions.jsx'
 import ItemCard from '../components/ItemCard.jsx'
 import ItemForm from '../components/ItemForm.jsx'
-import ProfileForm from '../components/ProfileForm.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { PageLoader } from '../components/AppLayout.jsx'
 import { useSupabase } from '../lib/supabase.jsx'
@@ -17,10 +16,9 @@ import { firstName } from '../lib/format.js'
 export default function MyWishlist() {
   const sb = useSupabase()
   const toast = useToast()
-  const { profile, saveProfile } = useProfile()
+  const { profile, openDetails } = useProfile()
   const [items, setItems] = useState(null)
   const [editing, setEditing] = useState(null) // null | 'new' | item
-  const [editingProfile, setEditingProfile] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -65,16 +63,6 @@ export default function MyWishlist() {
     }
   }
 
-  async function handleProfileSave(values) {
-    try {
-      await saveProfile(values)
-      setEditingProfile(false)
-      toast('Details saved')
-    } catch (err) {
-      toast(errorMessage(err), 'error')
-    }
-  }
-
   const hasDates = profile.birthday || profile.nameday
 
   return (
@@ -89,7 +77,7 @@ export default function MyWishlist() {
               {hasDates ? (
                 <Occasions person={profile} iconSize={15} />
               ) : (
-                <button className="btn btn--link" onClick={() => setEditingProfile(true)}>
+                <button className="btn btn--link" onClick={openDetails}>
                   Add your birthday and name day so friends know when to shop
                 </button>
               )}
@@ -97,7 +85,7 @@ export default function MyWishlist() {
           </div>
         </div>
         <div className="page-head__actions">
-          <button className="btn btn--ghost" onClick={() => setEditingProfile(true)}>
+          <button className="btn btn--ghost" onClick={openDetails}>
             <Settings2 size={17} /> Details
           </button>
           <button className="btn btn--primary" onClick={() => setEditing('new')}>
@@ -147,13 +135,6 @@ export default function MyWishlist() {
           item={editing === 'new' ? null : editing}
           onSubmit={handleSave}
           onClose={() => setEditing(null)}
-        />
-      )}
-      {editingProfile && (
-        <ProfileForm
-          profile={profile}
-          onSubmit={handleProfileSave}
-          onClose={() => setEditingProfile(false)}
         />
       )}
     </>

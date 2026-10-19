@@ -54,7 +54,7 @@ export default function ProfileForm({ profile, onSubmit, onClose }) {
   return (
     <Modal
       title="Your details"
-      subtitle="To change your name or photo, use the account menu in the top right."
+      subtitle="To change your name, photo or email, use Manage account in the avatar menu (top right)."
       onClose={onClose}
     >
       <form className="form" onSubmit={handleSubmit}>
